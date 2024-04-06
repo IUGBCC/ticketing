@@ -1,8 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:http/http.dart' as http;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 
 class PrintTicketPage extends StatelessWidget {
   final int id;
@@ -114,28 +120,24 @@ class _BodySectionState extends State<BodySection> {
     return number;
   }
 
-  /*  Future saveSale() async {
+  Future saveSale() async {
+    showAlertDialog(context, "Printing ticket, please wait...");
 
-    String phone = destinationController.text;
-    phone = phone.replaceAll("+", "");
-
-    showAlertDialog(context, "");
-    /* var result;
-    try { */
     var result = await http.post(
-      Uri.parse("http://192.168.1.104/api/transfer.php"),
+      Uri.parse("http://10.0.2.2/ticketing_api/save_sale.php"),
       body: {
-        "source": source,
-        "destination": phone,
-        "value": valueController.text,
-        "balance": balance.toString(),
+        "numberofticket": nombreDeTickets,
+        "totalprice": montant_total,
+        "id": id.toString(),
       },
     );
 
     Navigator.of(context).pop();
 
+    print(result.body);
+
     return result;
-  } */
+  }
 
   showAlertDialog(BuildContext context, String msg) {
     AlertDialog alert = AlertDialog(
@@ -315,7 +317,197 @@ class _BodySectionState extends State<BodySection> {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                onPressed: () {}),
+                onPressed: () async {
+                  // showAlertDialog(context, "Printing ticket, please wait...");
+
+                  saveSale();
+
+                  final output = await getTemporaryDirectory();
+                  print(output);
+                  final file = File("${output.path}/ticket.pdf");
+                  // final file = File("/storage/emulated/0/Download/example.pdf");
+
+                  final pdf = pw.Document();
+
+                  pdf.addPage(pw.Page(
+                      pageFormat: const PdfPageFormat(150, 210),
+                      build: (pw.Context context) {
+                        return pw.Center(
+                          child: pw.Column(children: [
+                            pw.SizedBox(
+                              height: 10,
+                            ),
+                            pw.Row(
+                              mainAxisAlignment: pw.MainAxisAlignment.center,
+                              children: [
+                                pw.Container(
+                                  // margin:
+                                  //     pw.EdgeInsets.only(bottom: 50, top: 15),
+                                  child:
+
+                                      /*  PrettyQr(
+                  image: AssetImage('images/payment4.png'),
+                  typeNumber: 3,
+                  size: 150,
+                  data: montant_total.toString(),
+                  errorCorrectLevel: QrErrorCorrectLevel.M,
+                  roundEdges: true,
+                  elementColor: Colors.blueGrey,
+                ), */
+
+                                      pw.BarcodeWidget(
+                                          data: montant_total.toString(),
+                                          barcode: pw.Barcode.qrCode(),
+                                          width: 70,
+                                          height: 70,
+                                          color: PdfColor.fromInt(
+                                              Colors.red.value)),
+                                ),
+                              ],
+                            ),
+                            pw.SizedBox(height: 10),
+                            pw.Row(
+                                mainAxisAlignment: pw.MainAxisAlignment.center,
+                                children: <pw.Widget>[
+                                  pw.Text(
+                                    '$departure <---> $arrival',
+                                    textAlign: pw.TextAlign.left,
+                                    style: pw.TextStyle(
+                                      color:
+                                          PdfColor.fromInt(Colors.black.value),
+                                      fontSize: 10,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                ]),
+                            pw.SizedBox(
+                              height: 10,
+                            ),
+                            pw.Row(
+                                mainAxisAlignment: pw.MainAxisAlignment.center,
+                                children: <pw.Widget>[
+                                  pw.Text(
+                                    'Nombre de tickets :',
+                                    textAlign: pw.TextAlign.left,
+                                    style: pw.TextStyle(
+                                      color:
+                                          PdfColor.fromInt(Colors.black.value),
+                                      fontSize: 10,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                  pw.SizedBox(width: 10),
+                                  pw.Text(
+                                    nombreDeTickets.toString(),
+                                    textAlign: pw.TextAlign.left,
+                                    style: pw.TextStyle(
+                                      color:
+                                          PdfColor.fromInt(Colors.black.value),
+                                      fontSize: 10,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                ]),
+                            pw.SizedBox(
+                              height: 10,
+                            ),
+                            pw.Row(
+                                mainAxisAlignment: pw.MainAxisAlignment.center,
+                                children: <pw.Widget>[
+                                  pw.Text(
+                                    'Prix Unitaire :',
+                                    textAlign: pw.TextAlign.left,
+                                    style: pw.TextStyle(
+                                      color:
+                                          PdfColor.fromInt(Colors.black.value),
+                                      fontSize: 10,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                  pw.SizedBox(width: 10),
+                                  pw.Text(
+                                    unitprice.toString(),
+                                    textAlign: pw.TextAlign.left,
+                                    style: pw.TextStyle(
+                                      color:
+                                          PdfColor.fromInt(Colors.black.value),
+                                      fontSize: 10,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                ]),
+                            pw.SizedBox(
+                              height: 10,
+                            ),
+                            pw.Row(
+                                mainAxisAlignment: pw.MainAxisAlignment.center,
+                                children: <pw.Widget>[
+                                  pw.Text(
+                                    'Total :',
+                                    textAlign: pw.TextAlign.left,
+                                    style: pw.TextStyle(
+                                      color:
+                                          PdfColor.fromInt(Colors.black.value),
+                                      fontSize: 10,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                  pw.SizedBox(width: 10),
+                                  pw.Text(
+                                    '${montant_total}F',
+                                    textAlign: pw.TextAlign.left,
+                                    style: pw.TextStyle(
+                                      color:
+                                          PdfColor.fromInt(Colors.black.value),
+                                      fontSize: 10,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                ]),
+                            pw.SizedBox(
+                              height: 10,
+                            ),
+                            pw.Row(
+                                mainAxisAlignment: pw.MainAxisAlignment.center,
+                                children: <pw.Widget>[
+                                  pw.Text(
+                                    'Date :',
+                                    textAlign: pw.TextAlign.left,
+                                    style: pw.TextStyle(
+                                      color:
+                                          PdfColor.fromInt(Colors.black.value),
+                                      fontSize: 10,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                  pw.SizedBox(width: 10),
+                                  pw.Text(
+                                    DateFormat('dd-MM-yyyy à kk:mm')
+                                        .format(DateTime.now())
+                                        .toString(),
+                                    textAlign: pw.TextAlign.left,
+                                    style: pw.TextStyle(
+                                      color:
+                                          PdfColor.fromInt(Colors.black.value),
+                                      fontSize: 10,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                ]),
+                            pw.SizedBox(
+                              height: 10,
+                            ),
+                          ]),
+                        ); // Center
+                      })); // Page
+
+                  await file.writeAsBytes(await pdf.save());
+                  print(file);
+
+                  await OpenFilex.open(file.path);
+
+                  // Navigator.of(context).pop();
+                }),
           ),
         ],
       ),

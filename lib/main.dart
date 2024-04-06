@@ -79,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         //color: Colors.white,
                         alignment: Alignment.center,
                         margin: const EdgeInsets.only(top: 20),
-                        child: const Text('No deata.'));
+                        child: const Text('No data.'));
                   }
 
                   if (snapshot.hasError)
